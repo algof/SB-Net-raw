@@ -102,11 +102,23 @@ def main():
     for script, cwd in to_run:
         run_script(script, cwd)
 
-    # Try to combine when all three present
+    # Try to combine only when all three encoded train files exist
     combiner = DATASETS_DIR / "train_combiner.py"
+    expected_trains = [
+        DATASETS_DIR / "CTU-13" / "final_dataset" / "train.csv",
+        DATASETS_DIR / "NCC" / "final_dataset" / "train.csv",
+        DATASETS_DIR / "NCC-2" / "final_dataset" / "train.csv",
+    ]
     if combiner.exists():
-        print("\n=== Running train_combiner.py ===")
-        subprocess.run([sys.executable, str(combiner)], check=True, cwd=str(DATASETS_DIR))
+        if all(p.exists() for p in expected_trains):
+            print("\n=== Running train_combiner.py (all train.csv found) ===")
+            subprocess.run([sys.executable, str(combiner)], check=True, cwd=str(DATASETS_DIR))
+        else:
+            missing = [str(p) for p in expected_trains if not p.exists()]
+            print("\nSkipping train_combiner.py. Missing expected files:")
+            for m in missing:
+                print(f"  - {m}")
+            print("Provide all three datasets (CTU-13, NCC, NCC-2) to combine.")
     else:
         print("Combiner not found, skipping.")
 
